@@ -38,13 +38,18 @@ const Todo: NextPage = () => {
   const createTodo = (data: any) => {
     const { title } = data;
     if (title) {
-      axios.post('/api/todo/create', data).then((res) => {
-        if (status === 'CREATED') {
-          todoList.push(res.data.data);
-        }
-        toast(res.data.message);
-        reset({ title: '' });
-      });
+      axios
+        .post('/api/todo/create', data)
+        .then((res) => {
+          if (status === 'CREATED') {
+            todoList.push(res.data.data);
+          }
+          toast(res.data.message);
+          reset({ title: '' });
+        })
+        .catch((e) => {
+          toast(e.response.data?.message);
+        });
     }
   };
 

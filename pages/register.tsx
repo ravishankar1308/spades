@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 import Router from 'next/router';
 import { validateMessage } from '../utils/validateMessage';
 import { Routes } from '../utils/routesPath';
+import { useAuth } from '../context/AuthContext';
 
 const Register: NextPage = () => {
   const {
@@ -18,6 +19,7 @@ const Register: NextPage = () => {
     handleSubmit
   } = useForm<any>();
 
+  const { getProfile } = useAuth();
   const [loader, setLoader] = useState(false);
 
   const onSubmit = (data: { username: string; password: string; confirmPassword: string }) => {
@@ -26,14 +28,14 @@ const Register: NextPage = () => {
     axios
       .post('/api/register', { username, password })
       .then(async (res) => {
-        await sessionStorage.setItem('token', res.data.data.token);
+        axios.defaults.headers.common.Authorization = res.data.data.token;
+        sessionStorage.setItem('token', res.data.data.token);
         toast.success(res.data.message);
-        Router.push(Routes.Todo);
-        setLoader(false);
+        getProfile();
       })
       .catch((e) => {
         reset({ username: '', password: '' });
-        toast.error(e.response.data.message);
+        toast.error(e.response.data?.message);
         setLoader(false);
       });
   };
@@ -98,7 +100,7 @@ const Register: NextPage = () => {
               render={({ field }) => (
                 <TextField
                   {...field}
-                  type={'confirmPassword'}
+                  type={'password'}
                   fullWidth
                   label="Confirm Password *"
                   error={errors.confirmPassword}

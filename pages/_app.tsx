@@ -1,7 +1,5 @@
 import '../styles/globals.css';
 import type { AppProps } from 'next/app';
-import { useEffect, useState } from 'react';
-import Router from 'next/router';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Container, AppBar, Toolbar, Typography, Button } from '@mui/material';
@@ -16,7 +14,7 @@ import axios from 'axios';
 import { styled } from '@mui/material/styles';
 import { Loader } from '../components/Loader';
 import { LoadingButton } from '@mui/lab';
-import { Routes } from '../utils/routesPath';
+import { AuthProvider, useAuth } from '../context/AuthContext';
 
 Axios.defaults.baseURL = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 if (typeof window !== 'undefined') {
@@ -47,83 +45,52 @@ const ContentStyle = styled('div')(({ theme }) => ({
   backgroundColor: '#e5e5e5'
 }));
 
-function MyApp({ Component, pageProps }: AppProps) {
-  const [userName, setUserName] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [intialize, setIntialize] = useState(false);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const token = window.sessionStorage.getItem('token');
-      if (token) {
-        axios
-          .get('/api/profile')
-          .then((res) => {
-            Router.push(Routes.Todo);
-            setIntialize(true);
-            setUserName(res.data.data.username);
-            setLoading(false);
-          })
-          .catch(() => {
-            setLoading(false);
-            setIntialize(true);
-            Router.push(Routes.Login);
-          });
-      } else {
-        setIntialize(true);
-        Router.push('/login');
-        setLoading(false);
-      }
-    }
-    // }
-  }, [typeof window]);
-
-  if (loading) {
+const NavBar = () => {
+  const { userName, intialize, logout } = useAuth();
+  if (!intialize) {
     return <Loader />;
   }
-  console.log({ userName });
   return (
-    <SWRConfig
-      value={{
-        fetcher,
-        dedupingInterval: 10000
-      }}
-    >
-      <ContentStyle>
-        <ThemeProvider theme={theme}>
-          <AppBar sx={{ position: 'absolute', top: 0 }}>
-            <Toolbar>
-              <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                Spades Todo
-              </Typography>
-              {userName && (
-                <div>
-                  <Button disabled variant={'text'} color="inherit">
-                    Hi {userName}
-                  </Button>
-                  <LoadingButton
-                    color="inherit"
-                    variant={'text'}
-                    onClick={() => {
-                      setUserName('');
-                      sessionStorage.clear();
-                      Router.push('/login');
-                    }}
-                  >
-                    Logout
-                  </LoadingButton>
-                </div>
-              )}
-            </Toolbar>
-          </AppBar>
-          <Container maxWidth="lg">
-            <CssBaseline />
-            <ToastContainer />
-            {intialize ? <Component {...pageProps} /> : <Loader />}
-          </Container>
-        </ThemeProvider>
-      </ContentStyle>
-    </SWRConfig>
+    <AppBar sx={{ position: 'absolute', top: 0 }}>
+      <Toolbar>
+        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+          Spades Todo
+        </Typography>
+        {userName && (
+          <div>
+            <Button disabled variant={'text'} color="inherit">
+              {`Hi ${userName}`}
+            </Button>
+            <LoadingButton color="inherit" variant={'text'} onClick={logout}>
+              Logout
+            </LoadingButton>
+          </div>
+        )}
+      </Toolbar>
+    </AppBar>
+  );
+};
+
+function MyApp({ Component, pageProps }: AppProps) {
+  return (
+    <AuthProvider>
+      <SWRConfig
+        value={{
+          fetcher
+        }}
+      >
+        <ContentStyle>
+          <ThemeProvider theme={theme}>
+            <NavBar />
+            <Container maxWidth="lg">
+              <CssBaseline />
+              <ToastContainer />
+              <Component {...pageProps} />
+            </Container>
+          </ThemeProvider>
+        </ContentStyle>
+      </SWRConfig>
+    </AuthProvider>
   );
 }
 

@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { toast } from 'react-toastify';
 import Router from 'next/router';
 import { Routes } from '../utils/routesPath';
+import { useAuth } from '../context/AuthContext';
 
 const Login: NextPage = () => {
   const {
@@ -17,20 +18,22 @@ const Login: NextPage = () => {
   } = useForm<any>();
 
   const [loader, setLoader] = useState(false);
+  const { getProfile } = useAuth();
 
   const onSubmit = (data: { username: string; password: string }) => {
     setLoader(true);
     axios
       .post('/api/login', data)
       .then(async (res) => {
-        await sessionStorage.setItem('token', res.data.data.token);
+        axios.defaults.headers.common.Authorization = res.data.data.token;
+        sessionStorage.setItem('token', res.data.data.token);
         toast.success(res.data.message);
+        getProfile();
         Router.push(Routes.Todo);
-        setLoader(false);
       })
       .catch((e) => {
         reset({ username: '', password: '' });
-        toast.error(e.response.data.message);
+        toast.error(e.response?.data?.message);
         setLoader(false);
       });
   };
