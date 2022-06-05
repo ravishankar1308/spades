@@ -34,7 +34,7 @@ const Register: NextPage = () => {
         getProfile();
       })
       .catch((e) => {
-        reset({ username: '', password: '' });
+        reset({ username: '', password: '', confirmPassword: '' });
         toast.error(e.response.data?.message);
         setLoader(false);
       });
